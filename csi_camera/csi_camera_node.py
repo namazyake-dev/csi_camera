@@ -1,7 +1,6 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
 from jetcam.csi_camera import CSICamera
 import numpy as np
 
@@ -13,7 +12,7 @@ class CSICameraNode(Node):
         self.declare_parameter('width', 640)
         self.declare_parameter('height', 480)
         self.declare_parameter('get_frame_freq_hz', 30.0)
-        self.declare_parameter('publish_freq_hz', 10.0)
+        self.declare_parameter('publish_freq_hz', 3.0)
         self.declare_parameter('verbose', 1)
 
         self.output_topic = self.get_parameter('output_topic').get_parameter_value().string_value
@@ -26,7 +25,6 @@ class CSICameraNode(Node):
         self.camera = CSICamera(width=self.width, height=self.height, capture_fps=self.get_frame_freq_hz)
         self.camera.running = True
 
-        self.bridge = CvBridge()
         self.pub = self.create_publisher(Image, self.output_topic, 10)
         self.get_frame_timer = self.create_timer(1.0/self.get_frame_freq_hz, self._get_frame_callback)
         self.pub_timer = self.create_timer(1.0/self.publish_freq_hz, self._publish_callback)
@@ -47,8 +45,8 @@ class CSICameraNode(Node):
     def _publish_callback(self):
         if self.frame is None:
             return
-        msg = self.bridge.cv2_to_imgmsg(self.frame, encoding="bgr8")
-        self.pub.publish(msg)
+        self.get_logger().info(self.frame)
+        # self.pub.publish(msg)
 
         if self.verbose >= 2:
             self.get_logger().info(f'Frame sent')
